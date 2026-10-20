@@ -28,9 +28,9 @@ from accelerate.test_utils.testing import (
     AccelerateTestCase,
     TempDirTestCase,
     execute_subprocess_async,
-    require_non_cpu,
     require_fsdp,
     require_multi_device,
+    require_non_cpu,
     slow,
 )
 from accelerate.utils.constants import (
@@ -201,7 +201,7 @@ class FSDPIntegrationTest(TempDirTestCase):
             cmd_config = cmd.copy()
             for i, strategy in enumerate(FSDP_SHARDING_STRATEGY):
                 if strategy.lower() in config:
-                    cmd_config.append(f"--fsdp_sharding_strategy={i+1}")
+                    cmd_config.append(f"--fsdp_sharding_strategy={i + 1}")
                     break
 
             if "fp32" in config:
@@ -247,7 +247,7 @@ class FSDPIntegrationTest(TempDirTestCase):
 
         for i, strategy in enumerate(FSDP_SHARDING_STRATEGY):
             cmd_config = cmd.copy()
-            cmd_config.append(f"--fsdp_sharding_strategy={i+1}")
+            cmd_config.append(f"--fsdp_sharding_strategy={i + 1}")
             if strategy != "FULL_SHARD":
                 continue
             state_dict_config_index = len(cmd_config)
@@ -301,7 +301,7 @@ class FSDPIntegrationTest(TempDirTestCase):
                 cmd_config.extend(["--use_fsdp"])
                 for i, strategy in enumerate(FSDP_SHARDING_STRATEGY):
                     if strategy.lower() in spec:
-                        cmd_config.append(f"--fsdp_sharding_strategy={i+1}")
+                        cmd_config.append(f"--fsdp_sharding_strategy={i + 1}")
                         break
 
                 if "cpu_offload" in spec:
