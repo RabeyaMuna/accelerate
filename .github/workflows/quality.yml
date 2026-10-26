@@ -1,22 +1,58 @@
 name: Quality Check
 
-on: [pull_request]
+on: push
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-    - uses: actions/checkout@v3.1.0
+    - uses: actions/checkout@v4
+
     - name: Set up Python 3.8
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.8
-    - name: Install Python dependencies
+        python-version: '3.8'
+
+    - name: Start PyPI Wayback
+      id: wayback
+      timeout-minutes: 2
+      run: |
+        docker run -d --name pypi-wayback -p 127.0.0.1:8629:8080 \
+          ghcr.io/waleko/pypi-wayback
+
+        for attempt in $(seq 1 15); do
+          if curl --fail --silent \
+            --connect-timeout 2 --max-time 5 \
+            "http://localhost:8629/2023-12-11/" -o /dev/null; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Wayback ready."
+            exit 0
+          fi
+          sleep 2
+        done
+
+        echo "::warning::Wayback not ready, falling back to PyPI."
+        echo "ready=false" >> "$GITHUB_OUTPUT"
+
+    - name: Install Python dependencies via Wayback
+      id: install_wayback
+      if: steps.wayback.outputs.ready == 'true'
+      continue-on-error: true
+      env:
+        PIP_INDEX_URL: http://localhost:8629/2023-12-11
+        UV_INDEX_URL: http://localhost:8629/2023-12-11
       run: pip install -e .[quality]
+
+    - name: Install Python dependencies via PyPI (fallback)
+      if: steps.wayback.outputs.ready != 'true' || steps.install_wayback.outcome
+        == 'failure'
+      run: pip install -e .[quality]
+
     - name: Run Quality check
       run: make quality
+
     - name: Check if failure
       if: ${{ failure() }}
       run: |
         echo "Quality check failed. Please ensure the right dependency versions are installed with 'pip install -e .[quality]' and rerun 'make style; make quality;'" >> $GITHUB_STEP_SUMMARY
-
