@@ -6,9 +6,13 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   build:
-    uses: huggingface/doc-builder/.github/workflows/upload_pr_documentation.yml@main
+    uses: huggingface/doc-builder/.github/workflows/upload_pr_documentation.yml@6f0962e04218e46b8117ac5990789cccebb647d8  # main
     with:
       package_name: accelerate
     secrets:
